@@ -1,1 +1,6 @@
 data/
+IGMC/
+data_test/
+data_test_copy/
+raw_data/
+.venv/
