@@ -9,13 +9,18 @@ dtypes = {
 
 class_values = np.array([0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5], dtype=dtypes['rating'])
 
-def get_movies_features(movie_df, item_dict, genre_headers, num_genres):
-    item_features = np.zeros((len(item_dict.keys()), num_genres), dtype=np.float32)
-    for movie_id, g_vec in zip(movie_df['item'].values.tolist(), movie_df[genre_headers].values.tolist()):
+def get_movies_features(movie_df, item_dict, headers_to_get, num_features):
+    item_features = np.zeros((len(item_dict.keys()), num_features), dtype=np.float32)
+    for movie_id, g_vec in zip(movie_df['item'].values.tolist(), movie_df[headers_to_get].values.tolist()):
         # check if movie_id was listed in ratings file and therefore in mapping dictionary
         if movie_id in item_dict.keys():
             item_features[item_dict[movie_id], :] = g_vec
     return item_features
+
+
+def get_user_features(user_idxs):
+    user_features = np.zeros((len(set(user_idxs)), 1), dtype=np.float32)
+    return user_features
 
 
 def get_ratings_data(filepath=None, separator=None, dtypes=None):
@@ -24,7 +29,7 @@ def get_ratings_data(filepath=None, separator=None, dtypes=None):
         names=["user", "item", "rating", "timestamp"], dtype=dtypes, skiprows=1)
 
 
-def get_movies_data(filepath=None, separator=None, movies_columns_to_drop=None):
+def get_movies_data(filepath=None, separator=None, movies_columns_to_drop=None, only_genres=True):
     movie_headers = ['item', 'title', 'genres', 'mean', 'popularity', 'mean_unbiased', 
                     '(no genres listed)', 'Action', 'Adventure', 'Animation', 'Children',
                     'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir',
@@ -36,9 +41,12 @@ def get_movies_data(filepath=None, separator=None, movies_columns_to_drop=None):
     for column_to_drop in movies_columns_to_drop:
         if column_to_drop in movie_df.columns:
             movie_df.drop(column_to_drop, axis=1, inplace=True)
-    genre_headers = movie_df.columns.values[7:]
-    num_genres = genre_headers.shape[0]
-    return movie_df, genre_headers, num_genres
+    if only_genres:
+        feature_headers = movie_df.columns.values[7:]
+    else:
+        feature_headers = np.concatenate((movie_df.columns.values[3:5], movie_df.columns.values[7:]))
+    num_features = feature_headers.shape[0]
+    return movie_df, feature_headers, num_features
 
 def map_data(data):
     """
