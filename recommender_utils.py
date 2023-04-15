@@ -132,3 +132,23 @@ def preprocess_data_to_graph(data_array, testing=False, rating_map=None, post_ra
     rating_mx_train = sp.csr_matrix(rating_mx_train.reshape(num_users, num_items))
 
     return rating_mx_train, nonzero_labels, user_idx, item_idx, item_dict
+
+
+def create_dataset_cnn(ratings, top=None):
+    if top is not None:
+        ratings.groupby('user')['rating'].count()
+    
+    unique_users = ratings.user.unique()
+    user_to_index = {old: new for new, old in enumerate(unique_users)}
+    new_users = ratings.user.map(user_to_index)
+    
+    unique_movies = ratings.item.unique()
+    movie_to_index = {old: new for new, old in enumerate(unique_movies)}
+    new_movies = ratings.item.map(movie_to_index)
+    
+    n_users = unique_users.shape[0]
+    n_movies = unique_movies.shape[0]
+    
+    X = pd.DataFrame({'user_id': new_users, 'movie_id': new_movies})
+    y = ratings['rating'].astype(np.float32)
+    return (n_users, n_movies), (X, y), (user_to_index, movie_to_index)
