@@ -134,6 +134,12 @@ def preprocess_data_to_graph(data_array, testing=False, rating_map=None, post_ra
     return rating_mx_train, nonzero_labels, user_idx, item_idx, item_dict
 
 
+def get_item_dict(data_array):
+    item_nodes_ratings = data_array[:, 1].astype(dtypes['item'])
+    _,item_dict,_ = map_data(item_nodes_ratings)
+    return item_dict
+
+
 def create_dataset_cnn(ratings, top=None):
     if top is not None:
         ratings.groupby('user')['rating'].count()
