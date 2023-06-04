@@ -29,7 +29,7 @@ def get_ratings_data(filepath=None, separator=None, dtypes=None):
         names=["user", "item", "rating", "timestamp"], dtype=dtypes, skiprows=1)
 
 
-def get_movies_data(filepath=None, separator=None, movies_columns_to_drop=None, only_genres=True):
+def get_movies_data(filepath=None, separator=None, movies_columns_to_drop=None, genres=False, other_features=None):
     movie_headers = ['item', 'title', 'genres', 'mean', 'popularity', 'mean_unbiased', 
                     '(no genres listed)', 'Action', 'Adventure', 'Animation', 'Children',
                     'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir',
@@ -41,10 +41,11 @@ def get_movies_data(filepath=None, separator=None, movies_columns_to_drop=None, 
     for column_to_drop in movies_columns_to_drop:
         if column_to_drop in movie_df.columns:
             movie_df.drop(column_to_drop, axis=1, inplace=True)
-    if only_genres:
-        feature_headers = movie_df.columns.values[7:]
-    else:
-        feature_headers = np.concatenate((movie_df.columns.values[3:5], movie_df.columns.values[7:]))
+    if other_features:
+        feature_headers = movie_df.columns.values[other_features]
+    if genres:
+        feature_headers = movie_df.columns.values[5:] if not other_features else np.concatenate((feature_headers, movie_df.columns.values[5:]))
+    
     num_features = feature_headers.shape[0]
     return movie_df, feature_headers, num_features
 
@@ -74,9 +75,7 @@ def map_data(data):
 
 def preprocess_data_to_graph(data_array, testing=False, rating_map=None, post_rating_map=None, ratio=1.0, dtypes=None, class_values=None):
     """
-    Loads official train/test split and uses 10% of training samples for validaiton
-    For each split computes 1-of-num_classes labels. Also computes training
-    adjacency matrix. Assumes flattening happens everywhere in row-major fashion.
+    Computes training adjacency matrix. Assumes flattening happens everywhere in row-major fashion.
     """
     if ratio < 1.0:
         data_array = data_array[data_array[:, -1].argsort()[:int(ratio*len(data_array))]]
@@ -140,16 +139,17 @@ def get_item_dict(data_array):
     return item_dict
 
 
-def create_dataset_cnn(ratings, top=None):
-    if top is not None:
-        ratings.groupby('user')['rating'].count()
-    
+def map_to_new_indexes(ratings, column):
+    unique_values = ratings[column].unique()
+    values_to_index = {old: new for new, old in enumerate(unique_values)}
+    return values_to_index
+
+
+def create_dataset_cnn(ratings, user_to_index, movie_to_index):
     unique_users = ratings.user.unique()
-    user_to_index = {old: new for new, old in enumerate(unique_users)}
     new_users = ratings.user.map(user_to_index)
     
     unique_movies = ratings.item.unique()
-    movie_to_index = {old: new for new, old in enumerate(unique_movies)}
     new_movies = ratings.item.map(movie_to_index)
     
     n_users = unique_users.shape[0]
@@ -157,4 +157,4 @@ def create_dataset_cnn(ratings, top=None):
     
     X = pd.DataFrame({'user_id': new_users, 'movie_id': new_movies})
     y = ratings['rating'].astype(np.float32)
-    return (n_users, n_movies), (X, y), (user_to_index, movie_to_index)
+    return (n_users, n_movies), (X, y)

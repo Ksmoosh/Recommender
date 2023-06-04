@@ -6,14 +6,14 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 class ConvEmbeddingNet(torch.nn.Module):
     """
-    Creates a dense network with embedding layers.
+    Model sieci neuronowej z warstwami zanurzenia oraz konwolucyjnymi.
     Args:
-        n_users: Number of unique users in the dataset.
-        n_movies: Number of unique movies in the dataset.
-        n_factors: Number of columns in the embeddings matrix.
-        embedding_dropout: Dropout rate to apply right after embeddings layer.
-        hidden: A single integer or a list of integers defining the number of units in hidden layer(s).
-        dropouts: A single integer or a list of integers defining the dropout layers rates applyied right after each of hidden layers.     
+        n_users: Liczba unikalnych uzytkowników w bazie danych.
+        n_movies: Liczba unikalnych filmów w bazie danych.
+        n_factors: Liczba kolumn w macierzy zanurzeń.
+        embedding_dropout: Współczynnik Dropout po warstwie zanurzeń.
+        hidden: Liczba warstw ukrytych lub lista z wielkościami wyjścia z kazdej z warstw ukrytych.
+        dropouts: Liczba warstw Dropout lub lista z współczynnikami Dropout po kazdej z warstw ukrytych.     
     """
     def __init__(self, n_users, n_movies,
                  n_factors=50, embedding_dropout=0.02, 
@@ -26,14 +26,13 @@ class ConvEmbeddingNet(torch.nn.Module):
         
         def gen_layers(n_in):
             """
-            A generator that yields a sequence of hidden layers and 
-            their activations/dropouts.
+            Generator, który zwraca poprzez yield sekwencję ukrytych - konwolucji, ich funkcji aktywacji oraz Dropout.
             """
             nonlocal hidden, dropouts
             assert len(dropouts) <= len(hidden)
 
             for n_out, rate in zip_longest(hidden, dropouts):
-                yield torch.nn.Conv1d(n_in, n_out, 1, bias=False)
+                yield torch.nn.Conv1d(n_in, n_out, 5, bias=False, padding=2)
                 yield torch.nn.ReLU()
                 if rate is not None and rate > 0.:
                     yield torch.nn.Dropout(rate)
@@ -58,7 +57,7 @@ class ConvEmbeddingNet(torch.nn.Module):
     
     def _init(self):
         """
-        Setup embeddings and hidden layers with reasonable initial values.
+        Inicjalizuje warstwy zanurzeń oraz warstwy ukryte odpowiednimi wartościami
         """
         
         def init(m):

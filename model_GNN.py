@@ -10,6 +10,12 @@ from IGMC.preprocessing import *
 
 class IGMC(torch.nn.Module):
     def __init__(self, side_features=False, n_side_features=0):
+        """
+        Args:
+            side_features: Zmienna boolowska okreslająca, 
+                czy w modelu mają istniec dodatkowe atrybuty filmow
+            n_sude_features: Liczba dodatkowych atrybutow filmow
+        """
         super(IGMC, self).__init__()
         self.rel_graph_convs = torch.nn.ModuleList()
         self.rel_graph_convs.append(RGCNConv(in_channels=4, out_channels=32,\
@@ -28,12 +34,20 @@ class IGMC(torch.nn.Module):
         self.side_features = side_features
 
     def reset_parameters(self):
+        """
+        Reset parametrow warstw sieci
+        """
         self.linear_layer1.reset_parameters()
         self.linear_layer2.reset_parameters()
         for i in self.rel_graph_convs:
             i.reset_parameters()
 
     def forward(self, data):
+        """
+        Glowna metoda sprzezenia w przod.
+        Args:
+            data: Dane na wejsciu sieci
+        """
         num_nodes = len(data.x)
         edge_index_dr, edge_type_dr = dropout_adj(data.edge_index, data.edge_type,\
                                 p=0.2, num_nodes=num_nodes, training=self.training)
