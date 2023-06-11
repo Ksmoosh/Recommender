@@ -126,7 +126,7 @@ if __name__ == '__main__':
     if only_genres:
         all_movies, genre_headers, num_genres = get_movies_data(filepath='data_small/movies.csv', separator=r',', movies_columns_to_drop=['genres'])
     else:
-        all_movies, genre_headers, num_genres = get_movies_data(filepath='data_small/movies.csv', separator=r',', movies_columns_to_drop=['genres'], only_genres=False)
+        all_movies, genre_headers, num_genres = get_movies_data(filepath='data_small/movies.csv', separator=r',', movies_columns_to_drop=['genres'], genres=True, other_features=[3,4])
 
     inference_data = get_ratings_data(filepath=input_data_path, separator=r',', dtypes=dtypes)
     input_length = len(inference_data)
